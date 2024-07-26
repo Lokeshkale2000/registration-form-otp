@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Form with OTP</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #3535cc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #registration-form {
+            background-color: #2b73c5;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #email-otp-section, #phone-otp-section, .result {
+            display: none;
+        }
+        .otp-verified {
+            display: none;
+            color: red;
+            margin-bottom: 10px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <form id="registration-form">
+        <label for="name">Name:</label>
+        <input type="text" id="name" required>
+        
+        <label for="email">Email:</label>
+        <input type="email" id="email" required>
+        
+        <button type="button" onclick="sendEmailOTP()">Send OTP</button>
+
+        <div id="email-otp-section">
+            <label for="email-otp">Enter OTP:</label>
+            <input type="text" id="email-otp" required>
+            <button type="button" onclick="validateEmailOTP()">Validate OTP</button>
+        </div>
+
+        <div id="email-otp-verified" class="otp-verified">OTP Verified!</div>
+
+        <label for="phone">Phone Number:</label>
+        <div id="phone-input-section">
+            <input type="tel" id="number" placeholder="Phone Number" required />
+            <div id="recaptcha-container"></div>
+            <button type="button" onclick="sendPhoneOTP()">Send OTP</button>
+            <div id="phone-otp-verified" class="otp-verified">OTP Verified!</div>
+        </div>
+
+        <div id="phone-otp-section">
+            <input type="text" id="phone-otp" placeholder="OTP Code" required />
+            <button type="button" onclick="verifyPhoneOTP()">Verify OTP</button>
+            <a href="#" onclick="location.reload()">Didn't receive a code? Try Again!</a>
+        </div>
+
+        <div class="result">
+            <div class="correct">
+                <h3>OTP Verified!</h3>
+                <button type="button" onclick="location.reload()">Confirm</button>
+            </div>
+        </div>
+        <button style="margin-top: 20px; justify-content: center;">Submit</button>
+        
+    </form>
+
+    <script src="https://www.gstatic.com/firebasejs/9.12.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.12.1/firebase-auth-compat.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script>
+        emailjs.init('UxvIrgFX7Kd-s_JXl'); 
+
+        let generatedEmailOTP;
+
+        function sendEmailOTP() {
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+
+            generatedEmailOTP = Math.floor(100000 + Math.random() * 900000); 
+            const templateParams = {
+                name: name,
+                email: email,
+                otp: generatedEmailOTP
+            };
+
+            emailjs.send('service_j3n24j8', 'template_q8qf8lj', templateParams)
+                .then(response => {
+                    console.log('OTP sent successfully!', response.status, response.text);
+                    alert('OTP has been sent to your email.');
+                    document.getElementById('email-otp-section').style.display = 'block';
+                })
+                .catch(err => {
+                    console.error('Failed to send OTP. Error: ', err);
+                    alert('Failed to send OTP. Please try again.');
+                });
+        }
+
+        function validateEmailOTP() {
+            const enteredOTP = document.getElementById('email-otp').value;
+            if (enteredOTP == generatedEmailOTP) {
+                document.getElementById('email-otp-section').style.display = 'none';
+                document.getElementById('email-otp-verified').style.display = 'block';
+                console.log('Email OTP Verified');
+            } else {
+                alert('Invalid OTP. Please try again.');
+                console.log('Invalid Email OTP');
+            }
+        }
+
+      
+const firebaseConfig = {
+  apiKey: "AIzaSyAhofk8BhEOMshGtQShMlQEzUa7LXsefVA",
+  authDomain: "otp-appp-9b8c3.firebaseapp.com",
+  projectId: "otp-appp-9b8c3",
+  storageBucket: "otp-appp-9b8c3.appspot.com",
+  messagingSenderId: "621269890362",
+  appId: "1:621269890362:web:ec5271f54b71db8a1fcc03",
+  measurementId: "G-CWVJMFN5MJ"
+};
+
+        firebase.initializeApp(firebaseConfig);
+
+        function render() {
+            window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container');
+            recaptchaVerifier.render();
+        }
+
+        function sendPhoneOTP() {
+            var number = document.getElementById('number').value;
+            firebase.auth().signInWithPhoneNumber(number, window.recaptchaVerifier)
+                .then(function (confirmationResult) {
+                    window.confirmationResult = confirmationResult;
+                    coderesult = confirmationResult;
+                    document.getElementById('phone-otp-section').style.display = 'block';
+                })
+                .catch(function (error) {
+                    alert(error.message);
+                });
+        }
+
+        function verifyPhoneOTP() {
+            var code = document.getElementById('phone-otp').value;
+            coderesult.confirm(code)
+                .then(function () {
+                    document.getElementById('phone-otp-section').style.display = 'none';
+                    document.getElementById('phone-otp-verified').style.display = 'block';
+                    console.log('Phone OTP Verified');
+                })
+                .catch(function () {
+                    alert('Invalid OTP. Please try again.');
+                    console.log('Invalid Phone OTP');
+                });
+        }
+
+        window.onload = render;
+    </script>
+</body>
+</html>
